@@ -135,10 +135,10 @@ async function exportMarkdownToDirectory(destinationDir) {
 
 function sanitizeFilename(filename) {
     filename = filename.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    filename = filename.replace(/[^a-z0-9_\-]/gi, '_').toLowerCase();
-    filename = filename.replace(/_+/g, '_')
-    filename = filename.replace(/^_/, '');
-    filename = filename.replace(/_$/, '');
+    filename = filename.replace(/[^a-zA-Z0-9_\-]/g, ' ');
+    filename = filename.replace(/ +/g, ' ')
+    filename = filename.replace(/^ /, '');
+    filename = filename.replace(/ $/, '');
     return filename;
 }
 
