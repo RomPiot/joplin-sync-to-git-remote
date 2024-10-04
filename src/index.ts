@@ -134,7 +134,12 @@ async function exportMarkdownToDirectory(destinationDir) {
 }
 
 function sanitizeFilename(filename) {
-    return filename.replace(/[^a-z0-9_\-]/gi, '_').toLowerCase();
+    filename = filename.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    filename = filename.replace(/[^a-z0-9_\-]/gi, '_').toLowerCase();
+    filename = filename.replace(/_+/g, '_')
+    filename = filename.replace(/^_/, '');
+    filename = filename.replace(/_$/, '');
+    return filename;
 }
 
 async function createGitFolderIfNotExists(directory, gitPath) {
