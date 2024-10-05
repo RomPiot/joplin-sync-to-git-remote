@@ -114,6 +114,26 @@ async function getAllNotes() {
     return allNotes;
 }
 
+async function getResourcesForNote(noteId) {
+    let page = 1;
+    let allResources = [];
+    let hasMore = true;
+
+    while (hasMore) {
+        const response = await joplin.data.get(['notes', noteId, 'resources'], {
+            fields: ['id', 'title', 'file_extension'],
+            page: page
+        });
+
+        allResources = allResources.concat(response.items);
+        hasMore = response.has_more;
+        page += 1;
+    }
+
+    return allResources;
+}
+
+
 async function exportMarkdownToDirectory(destinationDir) {
     try {
         const notebooks = await joplin.data.get(['folders'], {
@@ -132,11 +152,26 @@ async function exportMarkdownToDirectory(destinationDir) {
                 }
 
                 const notesInFolder = notes.filter(note => note.parent_id === folder.id);
+                const resourcesPaths = [];
 
                 for (const note of notesInFolder) {
+                    const resources = await getResourcesForNote(note.id);
+                    for (const resource of resources) {
+                        const resourceData = await joplin.data.get(['resources', resource.id, 'file']);
+                        if (!resourceData) {
+                            continue;
+                        }
+                        const resourceDataContent = Buffer.from(resourceData.body, 'base64');
+                        fs.writeFileSync(path.join(folderPath, `${resource.title}`), resourceDataContent);
+                        resourcesPaths[resource.id] = resource.title;
+                    }
+
                     const noteFilePath = path.join(folderPath, `${sanitizeFilename(note.title)}.md`);
-                    console.log(noteFilePath);
-                    fs.writeFileSync(noteFilePath, note.body);
+                    const noteBody = note.body.replaceAll(/!\[(.*?)\]\((.*?)\)/g, (match, p1, p2) => {
+                        const resourceId = p2.split('/')[1];
+                        return `![${p1}](${resourcesPaths[resourceId]})`;
+                    });
+                    fs.writeFileSync(noteFilePath, noteBody);
                 }
 
                 await createFolderStructure(folder.id, folderPath);
@@ -235,6 +270,8 @@ async function pushChanges(directory, gitPath) {
 }
 
 async function exportAndSync() {
+    // TODO: run sync
+
     const gitExecutablePath = await joplin.settings.value('gitExecutablePath');
     const localPathDir = await joplin.settings.value('localPathDir');
     const branchName = await joplin.settings.value('branchName');
