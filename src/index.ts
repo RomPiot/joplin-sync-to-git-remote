@@ -81,7 +81,7 @@ async function cleanDirectory(directory) {
         }
         fs.readdirSync(directory).forEach(file => {
             const filePath = path.join(directory, file);
-            if (file !== '.git') {
+            if (file !== '.git' && file !== '.gitignore') {
                 if (fs.lstatSync(filePath).isDirectory()) {
                     fs.rmdirSync(filePath, {recursive: true});
                 } else {
@@ -95,15 +95,32 @@ async function cleanDirectory(directory) {
     }
 }
 
+async function getAllNotes() {
+    let page = 1;
+    let allNotes = [];
+    let hasMore = true;
+
+    while (hasMore) {
+        const response = await joplin.data.get(['notes'], {
+            fields: ['id', 'title', 'body', 'parent_id', 'updated_time'],
+            page: page
+        });
+
+        allNotes = allNotes.concat(response.items);
+        hasMore = response.has_more;
+        page += 1;
+    }
+
+    return allNotes;
+}
+
 async function exportMarkdownToDirectory(destinationDir) {
     try {
         const notebooks = await joplin.data.get(['folders'], {
             fields: ['id', 'title', 'parent_id']
         });
 
-        const notes = await joplin.data.get(['notes'], {
-            fields: ['id', 'title', 'body', 'parent_id']
-        });
+        const notes = await getAllNotes();
 
         async function createFolderStructure(parentId, currentDir) {
             const children = notebooks.items.filter(folder => folder.parent_id === parentId);
@@ -114,7 +131,7 @@ async function exportMarkdownToDirectory(destinationDir) {
                     fs.mkdirSync(folderPath, {recursive: true});
                 }
 
-                const notesInFolder = notes.items.filter(note => note.parent_id === folder.id);
+                const notesInFolder = notes.filter(note => note.parent_id === folder.id);
 
                 for (const note of notesInFolder) {
                     const noteFilePath = path.join(folderPath, `${sanitizeFilename(note.title)}.md`);
@@ -135,6 +152,7 @@ async function exportMarkdownToDirectory(destinationDir) {
 
 function sanitizeFilename(filename) {
     filename = filename.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    filename = filename.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
     filename = filename.replace(/[^a-zA-Z0-9_\-]/g, ' ');
     filename = filename.replace(/ +/g, ' ')
     filename = filename.replace(/^ /, '');
