@@ -270,7 +270,7 @@ async function pushChanges(directory, gitPath) {
 }
 
 async function exportAndSync() {
-    // TODO: run sync
+    await joplin.commands.execute('synchronize');
 
     const gitExecutablePath = await joplin.settings.value('gitExecutablePath');
     const localPathDir = await joplin.settings.value('localPathDir');
