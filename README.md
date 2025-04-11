@@ -22,7 +22,7 @@ This is why, during git sync, first a Joplin sync is executed, then a forced pus
 3. Deletes all the contents of this local folder
 4. If git is not initialized in the folder
    1. If no repository is configured in the module configuration, initialize git with the configured branch
-   2. If a repository is configured, git clones remote content from the configured branch
+   2. If a repository is configured, git clone remote content from the configured branch
 5. Export all folders, notes and resources to folder
 6. Commit all
 7. If remote is configured, push to remote repo on relevant branch

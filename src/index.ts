@@ -70,7 +70,7 @@ const registerSettings = async () => {
             public: true,
             label: 'Local Path Directory to Export Notes to',
             description: 'Specify the local path directory to export notes to.'
-        }
+        },
     });
 };
 
@@ -195,7 +195,7 @@ function sanitizeFilename(filename) {
     return filename;
 }
 
-async function createGitFolderIfNotExists(directory, gitPath) {
+async function createGitFolderIfNotExists(directory: string, gitPath: string) {
     const gitCommand = `"${gitPath}"`;
     const branchName = await joplin.settings.value('branchName');
     const gitRepoUrl = await joplin.settings.value('gitRepoUrl');
@@ -255,7 +255,6 @@ async function pushChanges(directory, gitPath) {
 
     try {
         const remoteOutput = execSync(`${gitCommand} remote -v`, {cwd: directory}).toString();
-
         if (!remoteOutput.includes('origin')) {
             execSync(`${gitCommand} remote add origin ${gitRepoUrl}`, {cwd: directory});
             console.log('Git remote add successful.');
@@ -270,8 +269,6 @@ async function pushChanges(directory, gitPath) {
 }
 
 async function exportAndSync() {
-    await joplin.commands.execute('synchronize');
-
     const gitExecutablePath = await joplin.settings.value('gitExecutablePath');
     const localPathDir = await joplin.settings.value('localPathDir');
     const branchName = await joplin.settings.value('branchName');
@@ -282,11 +279,25 @@ async function exportAndSync() {
         return;
     }
 
+    await pullChanges(localPathDir, gitExecutablePath, branchName);
     await cleanDirectory(localPathDir);
     await createGitFolderIfNotExists(localPathDir, gitExecutablePath);
     await exportMarkdownToDirectory(localPathDir);
     await commitChanges(localPathDir, gitExecutablePath);
     await pushChanges(localPathDir, gitExecutablePath);
+}
+
+async function pullChanges(localPathDir: string, gitExecutablePath: string, branchName: string) {
+    try {
+        const gitCommand = `"${gitExecutablePath}"`;
+        execSync(`${gitCommand} fetch origin`, {cwd: localPathDir});
+        execSync(`${gitCommand} reset --hard origin/${branchName}`, {cwd: localPathDir});
+        console.log('Successfully synchronized with remote repository');
+    } catch (error) {
+        console.error('Error synchronizing with remote repository:', error);
+        await notifyUser(`Error synchronizing with remote repository: ${error.message}`);
+        return;
+    }
 }
 
 joplin.plugins.register({
