@@ -90,7 +90,6 @@ async function cleanDirectory(directory) {
             }
         });
     } catch (error) {
-        console.error('Error clearing the export directory:', error);
         await notifyUser(`Error clearing the export directory: ${error.message}`);
     }
 }
@@ -180,8 +179,7 @@ async function exportMarkdownToDirectory(destinationDir) {
 
         await createFolderStructure('', destinationDir);
     } catch (error) {
-        console.error('Error exporting notes:', error);
-        // await notifyUser(`Error exporting notes: ${error.message}`);
+        await notifyUser(`Error exporting notes: ${error.message}`);
     }
 }
 
