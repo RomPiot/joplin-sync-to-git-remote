@@ -181,7 +181,7 @@ async function exportMarkdownToDirectory(destinationDir) {
         await createFolderStructure('', destinationDir);
     } catch (error) {
         console.error('Error exporting notes:', error);
-        await notifyUser(`Error exporting notes: ${error.message}`);
+        // await notifyUser(`Error exporting notes: ${error.message}`);
     }
 }
 
@@ -205,7 +205,7 @@ async function createGitFolderIfNotExists(directory: string, gitPath: string) {
             return;
         }
 
-        console.log('Git directory not found.');
+        await notifyUser(`Git directory not found.`);
 
         if (!gitRepoUrl) {
             execSync(`${gitCommand} init`, {cwd: directory});
@@ -218,7 +218,7 @@ async function createGitFolderIfNotExists(directory: string, gitPath: string) {
             console.log('Git clone successful.');
         }
     } catch (error) {
-        console.error('Error creating Git directory:', error);
+        await notifyUser(`Error creating Git directory: ${error.message}`);
     }
 }
 
@@ -242,9 +242,9 @@ async function commitChanges(directory, gitPath) {
             console.log('Git commit successful.');
         }
     } catch (error) {
-        console.error('Error during Git commit:', error.message);
-        console.error('Full error output:', error.stderr?.toString() || error.toString());
-        throw error;
+        await notifyUser(`Error during Git commit: ${error.message}`);
+        await notifyUser(`Full error output: ${error.stderr?.toString() || error.toString()}`);
+        // throw error;
     }
 }
 
@@ -263,8 +263,8 @@ async function pushChanges(directory, gitPath) {
         execSync(`${gitCommand} push origin ${branchName} --set-upstream --force`, {cwd: directory});
         console.log('Git push successful.');
     } catch (error) {
-        console.error('Error during Git push:', error);
-        throw error;
+        await notifyUser(`Error during Git push: ${error.message}`);
+        // throw error;
     }
 }
 
@@ -274,7 +274,6 @@ async function exportAndSync() {
     const branchName = await joplin.settings.value('branchName');
 
     if (!branchName || !localPathDir) {
-        console.log('Please configure the plugin settings.');
         await notifyUser('Please configure the plugin settings.');
         return;
     }
@@ -294,7 +293,6 @@ async function pullChanges(localPathDir: string, gitExecutablePath: string, bran
         execSync(`${gitCommand} reset --hard origin/${branchName}`, {cwd: localPathDir});
         console.log('Successfully synchronized with remote repository');
     } catch (error) {
-        console.error('Error synchronizing with remote repository:', error);
         await notifyUser(`Error synchronizing with remote repository: ${error.message}`);
         return;
     }
