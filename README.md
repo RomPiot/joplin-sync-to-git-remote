@@ -11,6 +11,11 @@ I needed to make additional backups, in addition to the initial sync, in order t
 The source of truth remains what is on Joplin, through native synchronization, because Git merge conflicts may occur without being resolvable.
 This is why, during git sync, first a Joplin sync is executed, then a forced push to the remote repository.
 
+## Installation
+
+1. Download the last release of this plugin "com.RomPiot.SyncToGitRemote.jpl". 
+2. Open Joplin in Module tab, and install the module from the file previously downloaded
+
 ## Configuration
 
 ![sync-to-git-remote.jpg](sync-to-git-remote.jpg)
